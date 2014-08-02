@@ -46,6 +46,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.os.PowerManager;
 import android.os.PowerManager.WakeLock;
+import android.provider.Settings;
 import android.util.Log;
 import android.webkit.MimeTypeMap;
 
@@ -188,6 +189,8 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler implemen
         }
         boolean isWhitelisted = BluetoothOppManager.getInstance(mContext).
                 isWhitelisted(destination);
+        boolean acceptAllFilesIsEnabled = Settings.System.getInt(mContext.getContentResolver(),
+                Settings.System.BLUETOOTH_ACCEPT_ALL_FILES, 0) == 1;
 
         try {
             boolean pre_reject = false;
@@ -204,6 +207,7 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler implemen
                 obexResponse = ResponseCodes.OBEX_HTTP_LENGTH_REQUIRED;
             }
 
+        if (!acceptAllFilesIsEnabled) {
             if (name == null || name.equals("")) {
                 if (D) Log.w(TAG, "name is null or empty, reject the transfer");
                 pre_reject = true;
@@ -216,7 +220,7 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler implemen
                 int dotIndex = name.lastIndexOf(".");
                 if (dotIndex < 0 && mimeType == null) {
                     if (D) Log.w(TAG, "There is no file extension or mime type," +
-                            "reject the transfer");
+                            "reject the transfer. File name:" + name");
                     pre_reject = true;
                     obexResponse = ResponseCodes.OBEX_HTTP_BAD_REQUEST;
                 } else {
@@ -240,7 +244,8 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler implemen
                 }
             }
 
-            // Reject policy: anything outside the "white list" plus unspecified
+            // Reject policy: anything outside the "white list" plus unspecified plus
+            // unspecified
             // MIME Types. Also reject everything in the "black list".
             if (!pre_reject
                     && (mimeType == null
@@ -248,9 +253,19 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler implemen
                                     Constants.ACCEPTABLE_SHARE_INBOUND_TYPES))
                             || Constants.mimeTypeMatches(mimeType,
                                     Constants.UNACCEPTABLE_SHARE_INBOUND_TYPES))) {
-                if (D) Log.w(TAG, "mimeType is null or in unacceptable list, reject the transfer");
+                if (D) Log.w(TAG, "mimeType is null or in unacceptable list, reject the transfer. mimeType is "
+                                        + ((mimeType == null) ? "null" : mimeType));
                 pre_reject = true;
                 obexResponse = ResponseCodes.OBEX_HTTP_UNSUPPORTED_TYPE;
+                                    }
+            } else {
+                if (D)
+                    Log.i(TAG, "acceptAllFilesIsEnabled is true, skipped check of mime type");
+                if (mimeType == null) {
+                    mimeType = "*/*";
+                    if (D)
+                        Log.i(TAG, "mimeType is null. Fixed to */*");
+                }
             }
 
             if (pre_reject && obexResponse != ResponseCodes.OBEX_HTTP_OK) {
