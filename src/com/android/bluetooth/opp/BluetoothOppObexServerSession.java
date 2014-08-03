@@ -220,7 +220,7 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler implemen
                 int dotIndex = name.lastIndexOf(".");
                 if (dotIndex < 0 && mimeType == null) {
                     if (D) Log.w(TAG, "There is no file extension or mime type," +
-                            "reject the transfer. File name:" + name");
+                            "reject the transfer. File name:" + name);
                     pre_reject = true;
                     obexResponse = ResponseCodes.OBEX_HTTP_BAD_REQUEST;
                 } else {
