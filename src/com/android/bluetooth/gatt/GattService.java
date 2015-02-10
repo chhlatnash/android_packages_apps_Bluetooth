@@ -778,7 +778,7 @@ public class GattService extends ProfileService {
             // Find additional included services
             gattClientGetIncludedServiceNative(connId,
                 srvcType, srvcInstId, srvcUuidLsb, srvcUuidMsb,
-                inclSrvcType, inclSrvcInstId, inclSrvcUuidLsb, inclSrvcUuidMsb);
+                inclSrvcInstId, inclSrvcType, inclSrvcUuidLsb, inclSrvcUuidMsb);
         } else {
             // Discover descriptors now
             continueSearch(connId, 0);
